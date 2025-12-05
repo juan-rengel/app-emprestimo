@@ -5,10 +5,6 @@
 // /users/{userId}/clients/{clientId}
 // /users/{userId}/clients/{clientId}/loans/{loanId}
 // /users/{userId}/clients/{clientId}/loans/{loanId}/payments/{paymentId}
-//
-// Cada loan guarda campos agregados: principal, totalAmount, dailyInstallment,
-// remainingBalance, totalPaid, startDate, days, status.
-// Payments são registros individuais de pagamentos diários.
 // ---------------------------------------------------------
 
 let currentUser = null;
@@ -56,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // LOGIN PAGE
 // ---------------------------------------------------------
 function initLoginPage() {
-  // Se já estiver logado, vai para o app
   auth.onAuthStateChanged(user => {
     if (user) {
       window.location.href = "index.html";
@@ -88,7 +83,7 @@ function initLoginPage() {
 
     try {
       await auth.createUserWithEmailAndPassword(email, password);
-      showMessage("auth-messages", "Conta criada com sucesso. Você já está logado.", "success");
+      showMessage("auth-messages", "Conta criada com sucesso.", "success");
       window.location.href = "index.html";
     } catch (err) {
       showMessage("auth-messages", "Erro ao criar conta: " + err.message);
@@ -112,10 +107,9 @@ function initLoginPage() {
 // APP PAGE
 // ---------------------------------------------------------
 
-// Variáveis globais de cache
-let clientsCache = []; // {id, ...data}
-let loansCache = {};   // { clientId: [{id, ...data}] }
-let paymentsCache = {}; // { loanKey: [{id, ...data}] }  loanKey = clientId + '|' + loanId
+let clientsCache = [];
+let loansCache = {};
+let paymentsCache = {};
 
 function initAppPage() {
   auth.onAuthStateChanged(async (user) => {
@@ -123,6 +117,7 @@ function initAppPage() {
       window.location.href = "login.html";
       return;
     }
+
     currentUser = user;
     document.getElementById("current-user-email").textContent = user.email;
 
@@ -139,13 +134,11 @@ function initAppPage() {
       window.location.href = "login.html";
     });
 
-    // Inicializar funcionalidades
     initClientesSection();
     initEmprestimosSection();
     initPagamentosSection();
     initRelatoriosSection();
 
-    // Carregar dados iniciais
     subscribeClients();
   });
 }
@@ -153,25 +146,20 @@ function initAppPage() {
 // ---------------------------------------------------------
 // CLIENTES
 // ---------------------------------------------------------
-
 function getClientsCollection() {
   return db.collection("users").doc(currentUser.uid).collection("clients");
 }
 
 function subscribeClients() {
-  // Observa em tempo real os clientes
   getClientsCollection()
     .orderBy("name")
     .onSnapshot(snapshot => {
       clientsCache = [];
-      snapshot.forEach(doc => {
-        clientsCache.push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach(doc => clientsCache.push({ id: doc.id, ...doc.data() }));
+
       renderClientsTable();
       fillClientSelects();
       refreshAllDerivedData();
-    }, err => {
-      showMessage("global-alert", "Erro ao carregar clientes: " + err.message);
     });
 }
 
@@ -183,6 +171,7 @@ function initClientesSection() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = document.getElementById("cliente-id").value;
+
     const data = {
       name: document.getElementById("cliente-nome").value.trim(),
       doc: document.getElementById("cliente-doc").value.trim(),
@@ -212,9 +201,7 @@ function initClientesSection() {
     document.getElementById("cliente-id").value = "";
   });
 
-  filterInput.addEventListener("input", () => {
-    renderClientsTable();
-  });
+  filterInput.addEventListener("input", renderClientsTable);
 }
 
 function renderClientsTable() {
@@ -226,7 +213,7 @@ function renderClientsTable() {
   const filtered = clientsCache.filter(c => c.name.toLowerCase().includes(filter));
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Nenhum cliente encontrado.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="3">Nenhum cliente encontrado.</td></tr>`;
     return;
   }
 
@@ -243,23 +230,24 @@ function renderClientsTable() {
     tbody.appendChild(tr);
   });
 
-  // Ações
   tbody.querySelectorAll("button").forEach(btn => {
-    const action = btn.dataset.action;
     const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
     btn.addEventListener("click", () => {
       if (action === "edit") {
-        const client = clientsCache.find(c => c.id === id);
-        if (!client) return;
-        document.getElementById("cliente-id").value = client.id;
-        document.getElementById("cliente-nome").value = client.name;
-        document.getElementById("cliente-doc").value = client.doc || "";
-        document.getElementById("cliente-telefone").value = client.phone || "";
-        document.getElementById("cliente-endereco").value = client.address || "";
-        document.getElementById("cliente-observacoes").value = client.notes || "";
+        const c = clientsCache.find(x => x.id === id);
+        if (!c) return;
+
+        document.getElementById("cliente-id").value = c.id;
+        document.getElementById("cliente-nome").value = c.name;
+        document.getElementById("cliente-doc").value = c.doc || "";
+        document.getElementById("cliente-telefone").value = c.phone || "";
+        document.getElementById("cliente-endereco").value = c.address || "";
+        document.getElementById("cliente-observacoes").value = c.notes || "";
         setActiveSection("clientes");
+
       } else if (action === "detalhes") {
-        // Seleciona o cliente nos selects de empréstimos/pagamentos
         document.getElementById("emprestimo-cliente-select").value = id;
         document.getElementById("pagamento-cliente-select").value = id;
         loadLoansForClient(id);
@@ -278,16 +266,11 @@ function fillClientSelects() {
 
   selects.forEach(sel => {
     if (!sel) return;
-    sel.innerHTML = "";
-    const optEmpty = document.createElement("option");
-    optEmpty.value = "";
-    optEmpty.textContent = "Selecione...";
-    sel.appendChild(optEmpty);
+
+    sel.innerHTML = `<option value="">Selecione...</option>`;
+
     clientsCache.forEach(client => {
-      const opt = document.createElement("option");
-      opt.value = client.id;
-      opt.textContent = client.name;
-      sel.appendChild(opt);
+      sel.innerHTML += `<option value="${client.id}">${client.name}</option>`;
     });
   });
 }
@@ -295,7 +278,6 @@ function fillClientSelects() {
 // ---------------------------------------------------------
 // EMPRÉSTIMOS
 // ---------------------------------------------------------
-
 function getLoansCollection(clientId) {
   return getClientsCollection().doc(clientId).collection("loans");
 }
@@ -303,29 +285,21 @@ function getLoansCollection(clientId) {
 function initEmprestimosSection() {
   const clienteSelect = document.getElementById("emprestimo-cliente-select");
   const form = document.getElementById("emprestimo-form");
-  const calcularBtn = document.getElementById("emprestimo-calcular-btn");
 
   clienteSelect.addEventListener("change", () => {
-    const clientId = clienteSelect.value;
-    if (clientId) {
-      loadLoansForClient(clientId);
-    } else {
-      document.getElementById("emprestimos-tabela").innerHTML =
-        '<tr><td colspan="5">Selecione um cliente para ver os empréstimos.</td></tr>';
-    }
+    if (clienteSelect.value) loadLoansForClient(clienteSelect.value);
+    else document.getElementById("emprestimos-tabela").innerHTML =
+      `<tr><td colspan="5">Selecione um cliente para ver os empréstimos.</td></tr>`;
   });
 
-  calcularBtn.addEventListener("click", () => {
-    calcularParcelas();
-  });
+  document.getElementById("emprestimo-calcular-btn")
+    .addEventListener("click", calcularParcelas);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const clientId = clienteSelect.value;
-    if (!clientId) {
-      showMessage("global-alert", "Selecione um cliente antes de cadastrar o empréstimo.");
-      return;
-    }
+    if (!clientId) return showMessage("global-alert", "Selecione um cliente.");
 
     const id = document.getElementById("emprestimo-id").value;
     const principal = Number(document.getElementById("emprestimo-principal").value);
@@ -335,111 +309,96 @@ function initEmprestimosSection() {
     const dias = Number(document.getElementById("emprestimo-dias").value);
     const parcela = Number(document.getElementById("emprestimo-parcela").value);
     const status = document.getElementById("emprestimo-status").value;
-    const observacoes = document.getElementById("emprestimo-observacoes").value.trim();
+    const obs = document.getElementById("emprestimo-observacoes").value.trim();
 
-    if (!principal || !startDate || !jurosValor || !dias || !parcela) {
-      showMessage("global-alert", "Preencha e calcule corretamente os campos do empréstimo.");
-      return;
-    }
+    if (!principal || !startDate || !jurosValor || !dias || !parcela)
+      return showMessage("global-alert", "Preencha todos os campos.");
 
-    // Regras de negócio:
-    // valor_final = principal + (principal * taxa_diaria * dias) para juros percentual
-    // ou valor_final = principal + (valor_fixo_diario * dias) para juros fixo.
-    let totalAmount = 0;
-    if (jurosTipo === "percentual") {
-      const taxaDiaria = jurosValor / 100;
-      totalAmount = principal + (principal * taxaDiaria * dias);
-    } else {
-      totalAmount = principal + (jurosValor * dias);
-    }
+    let totalAmount = jurosTipo === "percentual"
+      ? principal + (principal * (jurosValor / 100) * dias)
+      : principal + (jurosValor * dias);
 
     const loanData = {
       principal,
-      startDate, // armazenado como string "YYYY-MM-DD"
+      startDate,
       jurosTipo,
       jurosValor,
       days: dias,
       totalAmount,
       dailyInstallment: parcela,
-      remainingBalance: totalAmount, // no início, saldo = total
+      remainingBalance: totalAmount,
       totalPaid: 0,
       status,
-      notes: observacoes,
+      notes: obs,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
       if (id) {
-        // Regra: bloquear alterações críticas se já houver pagamentos
         const hasPayments = await loanHasPayments(clientId, id);
+
         if (hasPayments) {
-          // Permitir apenas atualização de status e observações, por segurança.
           await getLoansCollection(clientId).doc(id).update({
-            status: loanData.status,
-            notes: loanData.notes
+            status,
+            notes: obs
           });
-          showMessage("global-alert", "Empréstimo atualizado (apenas status/observações).", "success");
+          showMessage("global-alert", "Atualizado (somente status/observações).", "success");
         } else {
           await getLoansCollection(clientId).doc(id).set(loanData, { merge: true });
-          showMessage("global-alert", "Empréstimo atualizado com sucesso.", "success");
+          showMessage("global-alert", "Empréstimo atualizado.", "success");
         }
+
       } else {
         await getLoansCollection(clientId).add(loanData);
         showMessage("global-alert", "Empréstimo criado com sucesso.", "success");
       }
+
       form.reset();
       document.getElementById("emprestimo-id").value = "";
+
     } catch (err) {
-      showMessage("global-alert", "Erro ao salvar empréstimo: " + err.message);
+      showMessage("global-alert", "Erro: " + err.message);
     }
   });
 }
 
 async function loanHasPayments(clientId, loanId) {
-  const paymentsRef = getLoansCollection(clientId).doc(loanId).collection("payments");
-  const snap = await paymentsRef.limit(1).get();
+  const snap = await getLoansCollection(clientId).doc(loanId)
+    .collection("payments").limit(1).get();
   return !snap.empty;
 }
 
 function calcularParcelas() {
   const principal = Number(document.getElementById("emprestimo-principal").value);
   const jurosTipo = document.getElementById("emprestimo-tipo-juros").value;
-  const jurosValor = Number(document.getElementById("emprestimo-juros").value);
+  const juros = Number(document.getElementById("emprestimo-juros").value);
   const dias = Number(document.getElementById("emprestimo-dias").value);
 
-  if (!principal || !jurosValor || !dias) {
-    showMessage("global-alert", "Informe principal, juros e dias para calcular as parcelas.");
-    return;
-  }
+  if (!principal || !juros || !dias)
+    return showMessage("global-alert", "Preencha todos os campos.");
 
-  let totalAmount = 0;
-  if (jurosTipo === "percentual") {
-    const taxaDiaria = jurosValor / 100;
-    totalAmount = principal + (principal * taxaDiaria * dias);
-  } else {
-    totalAmount = principal + (jurosValor * dias);
-  }
+  const total = jurosTipo === "percentual"
+    ? principal + (principal * (juros / 100) * dias)
+    : principal + (juros * dias);
 
-  const diaria = totalAmount / dias;
-  document.getElementById("emprestimo-parcela").value = diaria.toFixed(2);
-  showMessage("global-alert", "Cálculo realizado. Valor final: " + formatCurrency(totalAmount), "success");
+  const parcela = total / dias;
+
+  document.getElementById("emprestimo-parcela").value = parcela.toFixed(2);
+  showMessage("global-alert", "Valor final: " + formatCurrency(total), "success");
 }
 
 function loadLoansForClient(clientId) {
-  if (!clientId) return;
   getLoansCollection(clientId)
     .orderBy("startDate", "desc")
     .onSnapshot(snapshot => {
       loansCache[clientId] = [];
-      snapshot.forEach(doc => {
-        loansCache[clientId].push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach(doc =>
+        loansCache[clientId].push({ id: doc.id, ...doc.data() })
+      );
+
       renderLoansTable(clientId);
-      // Atualiza select de empréstimos em Pagamentos
       fillLoanSelectForPayments(clientId);
       refreshAllDerivedData();
-    }, err => {
-      showMessage("global-alert", "Erro ao carregar empréstimos: " + err.message);
     });
 }
 
@@ -448,33 +407,32 @@ function renderLoansTable(clientId) {
   tbody.innerHTML = "";
 
   const loans = loansCache[clientId] || [];
-  if (loans.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5">Nenhum empréstimo para este cliente.</td></tr>';
-    return;
-  }
+
+  if (loans.length === 0)
+    return tbody.innerHTML = `<tr><td colspan="5">Nenhum empréstimo encontrado.</td></tr>`;
 
   loans.forEach(loan => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${loan.startDate || ""}</td>
+      <td>${loan.startDate}</td>
       <td>${formatCurrency(loan.principal)}</td>
       <td>${formatCurrency(loan.remainingBalance || 0)}</td>
       <td>${loan.status}</td>
       <td>
-        <button class="btn small outline" data-id="${loan.id}" data-client="${clientId}" data-action="edit">Editar</button>
+        <button class="btn small outline" data-id="${loan.id}" data-client="${clientId}">Editar</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
   tbody.querySelectorAll("button").forEach(btn => {
+    const loanId = btn.dataset.id;
+    const cliId = btn.dataset.client;
+    const loan = (loansCache[cliId] || []).find(l => l.id === loanId);
+
     btn.addEventListener("click", () => {
-      const loanId = btn.dataset.id;
-      const cliId = btn.dataset.client;
-      const loan = (loansCache[cliId] || []).find(l => l.id === loanId);
       if (!loan) return;
 
-      // Preenche formulário para edição
       document.getElementById("emprestimo-id").value = loan.id;
       document.getElementById("emprestimo-principal").value = loan.principal;
       document.getElementById("emprestimo-data").value = loan.startDate;
@@ -485,6 +443,7 @@ function renderLoansTable(clientId) {
       document.getElementById("emprestimo-status").value = loan.status;
       document.getElementById("emprestimo-observacoes").value = loan.notes || "";
       document.getElementById("emprestimo-cliente-select").value = cliId;
+
       setActiveSection("emprestimos");
     });
   });
@@ -493,51 +452,39 @@ function renderLoansTable(clientId) {
 // ---------------------------------------------------------
 // PAGAMENTOS
 // ---------------------------------------------------------
-
 function getPaymentsCollection(clientId, loanId) {
   return getLoansCollection(clientId).doc(loanId).collection("payments");
 }
 
 function initPagamentosSection() {
-  const clienteSelect = document.getElementById("pagamento-cliente-select");
-  const emprestimoSelect = document.getElementById("pagamento-emprestimo-select");
+  const cliSelect = document.getElementById("pagamento-cliente-select");
+  const loanSelect = document.getElementById("pagamento-emprestimo-select");
   const form = document.getElementById("pagamento-form");
 
-  // Default data de pagamento = hoje
-  const hoje = new Date().toISOString().slice(0,10);
-  document.getElementById("pagamento-data").value = hoje;
+  document.getElementById("pagamento-data").value =
+    new Date().toISOString().slice(0, 10);
 
-  clienteSelect.addEventListener("change", () => {
-    const clientId = clienteSelect.value;
-    fillLoanSelectForPayments(clientId);
-  });
+  cliSelect.addEventListener("change", () => fillLoanSelectForPayments(cliSelect.value));
 
-  emprestimoSelect.addEventListener("change", () => {
-    const clientId = clienteSelect.value;
-    const loanId = emprestimoSelect.value;
-    if (clientId && loanId) {
-      loadPayments(clientId, loanId);
-    } else {
-      document.getElementById("pagamentos-tabela").innerHTML =
-        '<tr><td colspan="3">Selecione um empréstimo para ver o histórico.</td></tr>';
-    }
+  loanSelect.addEventListener("change", () => {
+    if (cliSelect.value && loanSelect.value)
+      loadPayments(cliSelect.value, loanSelect.value);
   });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const clientId = clienteSelect.value;
-    const loanId = emprestimoSelect.value;
+
+    const clientId = cliSelect.value;
+    const loanId = loanSelect.value;
     const data = document.getElementById("pagamento-data").value;
     const valor = Number(document.getElementById("pagamento-valor").value);
     const obs = document.getElementById("pagamento-observacoes").value.trim();
 
-    if (!clientId || !loanId || !data || !valor) {
-      showMessage("global-alert", "Preencha cliente, empréstimo, data e valor.");
-      return;
-    }
+    if (!clientId || !loanId || !data || !valor)
+      return showMessage("global-alert", "Preencha todos os campos.");
 
     try {
-      const paymentData = {
+      const payment = {
         paymentDate: data,
         amount: valor,
         notes: obs,
@@ -546,49 +493,45 @@ function initPagamentosSection() {
 
       const loanRef = getLoansCollection(clientId).doc(loanId);
 
-      await db.runTransaction(async (tx) => {
-        const loanSnap = await tx.get(loanRef);
-        if (!loanSnap.exists) throw new Error("Empréstimo não encontrado.");
-        const loan = loanSnap.data();
+      await db.runTransaction(async tx => {
+        const snap = await tx.get(loanRef);
+        if (!snap.exists) throw new Error("Empréstimo não encontrado.");
 
-        const newTotalPaid = (loan.totalPaid || 0) + valor;
-        const newRemaining = (loan.remainingBalance || loan.totalAmount || 0) - valor;
+        const loan = snap.data();
 
-        // Cálculo aproximado de status:
-        // - Quitado: saldo <= 0
-        // - Atrasado: hoje > data de término e saldo > 0
-        // - Ativo: caso contrário
-        let newStatus = "ativo";
-        const todayStr = new Date().toISOString().slice(0,10);
-        const endDateStr = computeLoanEndDate(loan.startDate, loan.days);
-        if (newRemaining <= 0.01) {
-          newStatus = "quitado";
-        } else if (todayStr > endDateStr) {
-          newStatus = "atrasado";
-        }
+        const totalPaid = (loan.totalPaid || 0) + valor;
+        const remaining = (loan.remainingBalance || loan.totalAmount) - valor;
 
-        tx.set(getPaymentsCollection(clientId, loanId).doc(), paymentData);
+        let status = "ativo";
+        const today = new Date().toISOString().slice(0,10);
+        const fim = computeLoanEndDate(loan.startDate, loan.days);
+
+        if (remaining <= 0.01) status = "quitado";
+        else if (today > fim) status = "atrasado";
+
+        tx.set(getPaymentsCollection(clientId, loanId).doc(), payment);
         tx.update(loanRef, {
-          totalPaid: newTotalPaid,
-          remainingBalance: newRemaining,
-          status: newStatus
+          totalPaid,
+          remainingBalance: remaining,
+          status
         });
       });
 
-      showMessage("global-alert", "Pagamento registrado com sucesso.", "success");
+      showMessage("global-alert", "Pagamento registrado.", "success");
       form.reset();
-      document.getElementById("pagamento-data").value = new Date().toISOString().slice(0,10);
-      // Recarrega pagamentos e dashboards
+      document.getElementById("pagamento-data").value =
+        new Date().toISOString().slice(0, 10);
+
       loadPayments(clientId, loanId);
       refreshAllDerivedData();
+
     } catch (err) {
-      showMessage("global-alert", "Erro ao registrar pagamento: " + err.message);
+      showMessage("global-alert", "Erro: " + err.message);
     }
   });
 }
 
 function computeLoanEndDate(startDateStr, days) {
-  if (!startDateStr || !days) return startDateStr;
   const [y, m, d] = startDateStr.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + days);
@@ -596,54 +539,44 @@ function computeLoanEndDate(startDateStr, days) {
 }
 
 function fillLoanSelectForPayments(clientId) {
-  const emprestimoSelect = document.getElementById("pagamento-emprestimo-select");
-  emprestimoSelect.innerHTML = "";
-  const optEmpty = document.createElement("option");
-  optEmpty.value = "";
-  optEmpty.textContent = "Selecione...";
-  emprestimoSelect.appendChild(optEmpty);
+  const sel = document.getElementById("pagamento-emprestimo-select");
+  sel.innerHTML = `<option value="">Selecione...</option>`;
 
   if (!clientId) return;
 
-  const loans = loansCache[clientId] || [];
-  loans.forEach(loan => {
-    const opt = document.createElement("option");
-    opt.value = loan.id;
-    opt.textContent = `${loan.startDate} - ${formatCurrency(loan.principal)} (${loan.status})`;
-    emprestimoSelect.appendChild(opt);
+  (loansCache[clientId] || []).forEach(loan => {
+    sel.innerHTML += `
+      <option value="${loan.id}">
+        ${loan.startDate} - ${formatCurrency(loan.principal)} (${loan.status})
+      </option>`;
   });
 }
 
 function loadPayments(clientId, loanId) {
-  if (!clientId || !loanId) return;
   getPaymentsCollection(clientId, loanId)
     .orderBy("paymentDate", "asc")
     .onSnapshot(snapshot => {
       const key = clientId + "|" + loanId;
       paymentsCache[key] = [];
-      snapshot.forEach(doc => {
-        paymentsCache[key].push({ id: doc.id, ...doc.data() });
-      });
+      snapshot.forEach(doc =>
+        paymentsCache[key].push({ id: doc.id, ...doc.data() })
+      );
       renderPaymentsTable(clientId, loanId);
       refreshAllDerivedData();
-    }, err => {
-      showMessage("global-alert", "Erro ao carregar pagamentos: " + err.message);
     });
 }
 
 function renderPaymentsTable(clientId, loanId) {
   const tbody = document.getElementById("pagamentos-tabela");
+  const key = clientId + "|" + loanId;
+  const list = paymentsCache[key] || [];
+
   tbody.innerHTML = "";
 
-  const key = clientId + "|" + loanId;
-  const payments = paymentsCache[key] || [];
+  if (list.length === 0)
+    return tbody.innerHTML = `<tr><td colspan="3">Nenhum pagamento registrado.</td></tr>`;
 
-  if (payments.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Nenhum pagamento registrado.</td></tr>';
-    return;
-  }
-
-  payments.forEach(p => {
+  list.forEach(p => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${p.paymentDate}</td>
@@ -657,99 +590,87 @@ function renderPaymentsTable(clientId, loanId) {
 // ---------------------------------------------------------
 // RELATÓRIOS
 // ---------------------------------------------------------
-
 function initRelatoriosSection() {
-  const periodoForm = document.getElementById("relatorio-periodo-form");
-  const cliBtn = document.getElementById("relatorio-cliente-btn");
+  document.getElementById("relatorio-periodo-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-  periodoForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const dIni = document.getElementById("relatorio-data-inicio").value;
-    const dFim = document.getElementById("relatorio-data-fim").value;
-    if (!dIni || !dFim) {
-      showMessage("global-alert", "Informe o período para o relatório.");
-      return;
-    }
-    await gerarRelatorioPeriodo(dIni, dFim);
-  });
+      const ini = document.getElementById("relatorio-data-inicio").value;
+      const fim = document.getElementById("relatorio-data-fim").value;
 
-  cliBtn.addEventListener("click", async () => {
-    const cliId = document.getElementById("relatorio-cliente-select").value;
-    if (!cliId) {
-      showMessage("global-alert", "Selecione um cliente para o relatório.");
-      return;
-    }
-    await gerarRelatorioCliente(cliId);
-  });
+      if (!ini || !fim)
+        return showMessage("global-alert", "Preencha o período.");
+
+      gerarRelatorioPeriodo(ini, fim);
+    });
+
+  document.getElementById("relatorio-cliente-btn")
+    .addEventListener("click", () => {
+      const id = document.getElementById("relatorio-cliente-select").value;
+      if (!id)
+        return showMessage("global-alert", "Selecione um cliente.");
+
+      gerarRelatorioCliente(id);
+    });
 }
 
-// Relatório por período
-async function gerarRelatorioPeriodo(dataInicio, dataFim) {
-  // Estratégia simples:
-  // - Total emprestado no período: soma do principal de empréstimos com startDate no intervalo.
-  // - Total recebido: soma dos pagamentos com paymentDate no intervalo.
-  // - Lucro aproximado = Total recebido - Total emprestado no período.
-  let totalEmprestado = 0;
-  let totalRecebido = 0;
+async function gerarRelatorioPeriodo(ini, fim) {
+  let emprestado = 0;
+  let recebido = 0;
 
-  const clientsSnap = await getClientsCollection().get();
-  for (const cliDoc of clientsSnap.docs) {
-    const cliId = cliDoc.id;
-    const loansSnap = await getLoansCollection(cliId).get();
+  const cliSnap = await getClientsCollection().get();
+  for (const c of cliSnap.docs) {
+    const loansSnap = await getLoansCollection(c.id).get();
+
     for (const loanDoc of loansSnap.docs) {
       const loan = loanDoc.data();
-      if (loan.startDate >= dataInicio && loan.startDate <= dataFim) {
-        totalEmprestado += loan.principal || 0;
-      }
-      const paymentsSnap = await getPaymentsCollection(cliId, loanDoc.id)
-        .where("paymentDate", ">=", dataInicio)
-        .where("paymentDate", "<=", dataFim)
+
+      if (loan.startDate >= ini && loan.startDate <= fim)
+        emprestado += loan.principal || 0;
+
+      const paySnap = await getPaymentsCollection(c.id, loanDoc.id)
+        .where("paymentDate", ">=", ini)
+        .where("paymentDate", "<=", fim)
         .get();
-      paymentsSnap.forEach(p => {
-        totalRecebido += p.data().amount || 0;
-      });
+
+      paySnap.forEach(p => recebido += p.data().amount || 0);
     }
   }
 
-  const lucro = totalRecebido - totalEmprestado;
-
-  document.getElementById("rel-total-emprestado").textContent = formatCurrency(totalEmprestado);
-  document.getElementById("rel-total-recebido").textContent = formatCurrency(totalRecebido);
-  document.getElementById("rel-lucro").textContent = formatCurrency(lucro);
+  document.getElementById("rel-total-emprestado").textContent = formatCurrency(emprestado);
+  document.getElementById("rel-total-recebido").textContent = formatCurrency(recebido);
+  document.getElementById("rel-lucro").textContent = formatCurrency(recebido - emprestado);
 }
 
-// Relatório por cliente
-async function gerarRelatorioCliente(cliId) {
-  let totalEmprestado = 0;
-  let totalRecebido = 0;
-  let saldoAtual = 0;
+async function gerarRelatorioCliente(id) {
+  let emprestado = 0;
+  let recebido = 0;
+  let saldo = 0;
 
-  const loansSnap = await getLoansCollection(cliId).get();
+  const loansSnap = await getLoansCollection(id).get();
   for (const loanDoc of loansSnap.docs) {
     const loan = loanDoc.data();
-    totalEmprestado += loan.principal || 0;
-    totalRecebido += loan.totalPaid || 0;
-    saldoAtual += loan.remainingBalance || 0;
+
+    emprestado += loan.principal || 0;
+    recebido += loan.totalPaid || 0;
+    saldo += loan.remainingBalance || 0;
   }
 
-  document.getElementById("rel-cli-total-emprestado").textContent = formatCurrency(totalEmprestado);
-  document.getElementById("rel-cli-total-recebido").textContent = formatCurrency(totalRecebido);
-  document.getElementById("rel-cli-saldo").textContent = formatCurrency(saldoAtual);
+  document.getElementById("rel-cli-total-emprestado").textContent = formatCurrency(emprestado);
+  document.getElementById("rel-cli-total-recebido").textContent = formatCurrency(recebido);
+  document.getElementById("rel-cli-saldo").textContent = formatCurrency(saldo);
 }
 
 // ---------------------------------------------------------
-// DASHBOARD & ATUALIZAÇÕES DERIVADAS
+// DASHBOARD (versão simples)
 // ---------------------------------------------------------
-
 async function refreshAllDerivedData() {
   await refreshDashboard();
-  // Relatórios são gerados sob demanda, não aqui.
 }
-// ---------------------------------------------------------
-// DASHBOARD & ATUALIZAÇÕES DERIVADAS
-// ---------------------------------------------------------
+
 async function refreshDashboard() {
-  const todayStr = new Date().toISOString().slice(0,10);
+  const hoje = new Date().toISOString().slice(0, 10);
+
   let totalEmprestadoAtivos = 0;
   let totalReceberHoje = 0;
   let totalRecebidoHoje = 0;
@@ -760,97 +681,88 @@ async function refreshDashboard() {
   const vencimentosHoje = [];
   const atrasados = [];
 
-  const clientsSnap = await getClientsCollection().get();
-  for (const cliDoc of clientsSnap.docs) {
+  const cliSnap = await getClientsCollection().get();
+  for (const cliDoc of cliSnap.docs) {
     const cliId = cliDoc.id;
-    const cliData = cliDoc.data();
-    const loansSnap = await getLoansCollection(cliId).get();
+    const cli = cliDoc.data();
 
+    const loansSnap = await getLoansCollection(cliId).get();
     for (const loanDoc of loansSnap.docs) {
       const loan = loanDoc.data();
 
-      // Contagem por status
+      // Contagem de status
       if (loan.status === "ativo") countAtivo++;
       else if (loan.status === "atrasado") countAtrasado++;
       else if (loan.status === "quitado") countQuitado++;
 
+      // Totais + vencimentos
       if (loan.status === "ativo") {
         totalEmprestadoAtivos += loan.principal || 0;
 
-        const endDate = computeLoanEndDate(loan.startDate, loan.days);
+        const fim = computeLoanEndDate(loan.startDate, loan.days);
 
-        if (todayStr >= loan.startDate && todayStr <= endDate) {
+        if (hoje >= loan.startDate && hoje <= fim) {
           totalReceberHoje += loan.dailyInstallment || 0;
-
-          // AQUI FOI CORRIGIDO → ANTES salvava o ID, agora salva dados úteis
           vencimentosHoje.push({
-            cliente: cliData.name,
-            descricao: `Início: ${loan.startDate} | Total: ${formatCurrency(loan.totalAmount)}`,
-            valor: loan.dailyInstallment || 0
+            cliente: cli.name,
+            valor: loan.dailyInstallment
           });
         }
       }
 
-      // Empréstimos atrasados
-      if (loan.status === "atrasado" && (loan.remainingBalance || 0) > 0) {
+      // Atrasados
+      if (loan.status === "atrasado" && loan.remainingBalance > 0) {
         atrasados.push({
-          cliente: cliData.name,
-          saldo: loan.remainingBalance || 0,
-          inicio: loan.startDate
+          cliente: cli.name,
+          saldo: loan.remainingBalance
         });
       }
 
       // Pagamentos de hoje
-      const paymentsSnap = await getPaymentsCollection(cliId, loanDoc.id)
-        .where("paymentDate", "==", todayStr)
-        .get();
+      const paySnap = await getPaymentsCollection(cliId, loanDoc.id)
+        .where("paymentDate", "==", hoje).get();
 
-      paymentsSnap.forEach(p => {
+      paySnap.forEach(p => {
         totalRecebidoHoje += p.data().amount || 0;
       });
     }
   }
 
-  // Atualiza cards
+  // Atualizar cards
   document.getElementById("dash-total-emprestado").textContent = formatCurrency(totalEmprestadoAtivos);
   document.getElementById("dash-total-receber-hoje").textContent = formatCurrency(totalReceberHoje);
   document.getElementById("dash-total-recebido-hoje").textContent = formatCurrency(totalRecebidoHoje);
   document.getElementById("dash-contagem-emprestimos").textContent =
     `${countAtivo} / ${countAtrasado} / ${countQuitado}`;
 
-  // Tabela "Vencimentos de hoje"
- // ----- VENCIMENTOS HOJE -----
-const vencList = document.getElementById("vencimentos-list");
-vencList.innerHTML = "";
+  // Listas
+  const vencList = document.getElementById("vencimentos-list");
+  vencList.innerHTML = "";
 
-if (vencimentosHoje.length === 0) {
-  vencList.innerHTML = `<p class="empty">Nenhum vencimento hoje.</p>`;
-} else {
-  vencimentosHoje.forEach(v => {
-    vencList.innerHTML += `
-      <div class="list-item">
-        <strong>${v.cliente}</strong>
-        <p>Parcela: ${formatCurrency(v.valor)}</p>
-      </div>
-    `;
-  });
-}
+  if (vencimentosHoje.length === 0) {
+    vencList.innerHTML = `<p class="empty">Nenhum vencimento hoje.</p>`;
+  } else {
+    vencimentosHoje.forEach(v => {
+      vencList.innerHTML += `
+        <div class="list-item">
+          <strong>${v.cliente}</strong>
+          <p>Parcela: ${formatCurrency(v.valor)}</p>
+        </div>`;
+    });
+  }
 
-// ----- ATRASADOS -----
-const atrList = document.getElementById("atrasados-list");
-atrList.innerHTML = "";
+  const atrList = document.getElementById("atrasados-list");
+  atrList.innerHTML = "";
 
-if (atrasados.length === 0) {
-  atrList.innerHTML = `<p class="empty">Nenhum empréstimo atrasado.</p>`;
-} else {
-  atrasados.forEach(a => {
-    atrList.innerHTML += `
-      <div class="list-item">
-        <strong>${a.cliente}</strong>
-        <p>Saldo devedor: ${formatCurrency(a.saldo)}</p>
-      </div>
-    `;
-  });
-}
-
+  if (atrasados.length === 0) {
+    atrList.innerHTML = `<p class="empty">Nenhum empréstimo atrasado.</p>`;
+  } else {
+    atrasados.forEach(a => {
+      atrList.innerHTML += `
+        <div class="list-item">
+          <strong>${a.cliente}</strong>
+          <p>Saldo devedor: ${formatCurrency(a.saldo)}</p>
+        </div>`;
+    });
+  }
 }

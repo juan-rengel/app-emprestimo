@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Controle de Empréstimos Diários</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+  margin-bottom: 30px;
+}
+
+.small-chart {
+  max-height: 350px;
+}
+
+.card-premium canvas {
+  width: 100% !important;
+  height: 260px !important;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chart-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.filter-btn:hover {
+  background: #e2e8f0;
+}
+
+.filter-btn.active {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+
+  </style>
+</head>
+<body id="app-page">
+ <header class="app-header">
+    <div class="logo">MJ</div>
+    <div class="user-actions">
+    <span id="current-user-email"></span>
+      <button id="logout-btn" class="btn small outline">Sair</button>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- Menu lateral -->
+   <!-- Botão mobile -->
+<div id="menu-toggle" class="menu-toggle">
+  <i data-lucide="menu"></i>
+</div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-title">
+    
+  </div>
+
+  <button class="nav-link" data-section="dashboard">
+    <i data-lucide="gauge"></i> Dashboard
+  </button>
+
+  <button class="nav-link" data-section="clientes">
+    <i data-lucide="users"></i> Clientes
+  </button>
+
+  <button class="nav-link" data-section="emprestimos">
+    <i data-lucide="wallet"></i> Empréstimos
+  </button>
+
+  <button class="nav-link" data-section="pagamentos">
+    <i data-lucide="badge-dollar-sign"></i> Pagamentos
+  </button>
+
+  <button class="nav-link" data-section="relatorios">
+    <i data-lucide="bar-chart-3"></i> Relatórios
+  </button>
+</nav>
+
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+      <!-- ALERTA GLOBAL -->
+      <div id="global-alert" class="alert" style="display:none;"></div>
+
+      <!-- DASHBOARD -->
+<section id="section-dashboard" class="section active">
+  <h2>Dashboard</h2>
+
+  <div class="dashboard-grid">
+
+    <!-- GRÁFICO 1 -->
+    <div class="card card-premium">
+  <div class="chart-header">
+    <h3>Recebimentos</h3>
+
+    <div class="chart-filters">
+      <button class="filter-btn active" data-range="7">7 dias</button>
+      <button class="filter-btn" data-range="30">30 dias</button>
+      <button class="filter-btn" data-range="365">12 meses</button>
+    </div>
+  </div>
+
+  <canvas id="chartRecebimentos"></canvas>
+</div>
+
+
+    <!-- GRÁFICO 2 -->
+    <div class="card card-premium">
+      <h3>Total emprestado por cliente</h3>
+      <canvas id="chartEmprestadoPorCliente"></canvas>
+    </div>
+
+    <!-- GRÁFICO 3 -->
+    <div class="card card-premium small-chart">
+      <h3>Status dos Empréstimos</h3>
+      <canvas id="chartStatusEmprestimos"></canvas>
+    </div>
+
+    <!-- GRÁFICO 4 -->
+    <div class="card card-premium small-chart">
+      <h3>Previsto x Recebido Hoje</h3>
+      <canvas id="chartPrevistoRecebidoHoje"></canvas>
+    </div>
+
+  </div>
+</section>
+
+
+    </main>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Configuração do Firebase e lógica -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script>
+  lucide.createIcons();
+</script>
+
+
+<script>
+  lucide.createIcons();
+
+  const sidebar = document.getElementById("sidebar");
+  const toggle = document.getElementById("menu-toggle");
+
+  toggle.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+  });
+
+  // Fecha menu ao clicar em um item (mobile)
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 900) {
+        sidebar.classList.remove("open");
+      }
+    });
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</body>
+</html>
