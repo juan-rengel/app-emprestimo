@@ -577,3 +577,136 @@ textarea {
   font-size: 14px;
   color: #64748b;
 }
+
+
+
+
+
+/* ============================
+   LOGIN PREMIUM
+============================ */
+
+#login-page {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CONTAINER CENTRAL */
+.auth-wrapper {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+/* CARD */
+.auth-card {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 14px;
+
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+}
+
+.auth-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.auth-subtitle {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 24px;
+  color: #6b7280;
+}
+
+/* FORMULÁRIOS */
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form.active {
+  display: flex;
+}
+
+.auth-form h2 {
+  margin-bottom: 8px;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+/* INPUTS */
+.auth-form input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px #a7f3d0;
+}
+
+/* BOTOES */
+.btn {
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn.full {
+  width: 100%;
+}
+
+.btn.primary {
+  background: #16a34a;
+  color: white;
+}
+
+.btn.secondary {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.btn.outline {
+  border: 1px solid #16a34a;
+  background: transparent;
+  color: #16a34a;
+}
+
+/* LINKS */
+.link {
+  text-align: center;
+  color: #16a34a;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ALERTA */
+.alert {
+  margin-top: 16px;
+  background: #fee2e2;
+  padding: 12px;
+  border-radius: 8px;
+  color: #b91c1c;
+}
