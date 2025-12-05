@@ -28,6 +28,9 @@ body {
   align-items: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+.logo{
+  margin: auto;
+}
 
 .app-header .logo {
   font-size: 20px;
@@ -494,3 +497,83 @@ textarea {
 
 
 
+/* ==========================================
+   CARDS PREMIUM PARA LISTAS DA DASHBOARD
+========================================== */
+
+.cards-dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.list-card {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* Cabeçalho do card */
+.list-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.list-card-header .icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-card.success .icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.list-card.danger .icon {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.list-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Conteúdo da lista */
+.list-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.list-item strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.list-item p {
+  margin: 4px 0 0 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.empty {
+  font-size: 14px;
+  color: #64748b;
+}

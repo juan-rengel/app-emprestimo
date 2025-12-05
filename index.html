@@ -8,10 +8,10 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body id="app-page">
-  <header class="app-header">
-    <div class="logo">Controle de Empréstimos Diários</div>
+ <header class="app-header">
+    <div class="logo">MJ</div>
     <div class="user-actions">
-      <span id="current-user-email"></span>
+    <span id="current-user-email"></span>
       <button id="logout-btn" class="btn small outline">Sair</button>
     </div>
   </header>
@@ -57,7 +57,7 @@
       <div id="global-alert" class="alert" style="display:none;"></div>
 
       <!-- DASHBOARD -->
-        <section id="section-dashboard" class="section active">
+<section id="section-dashboard" class="section active">
   <h2>Dashboard</h2>
 
   <div class="cards-grid">
@@ -99,49 +99,40 @@
     </div>
 
   </div>
+<div class="cards-dashboard-list">
 
-  <div class="two-columns" style="margin-top: 30px;">
-
-    <!-- Vencimentos de hoje -->
-    <div>
-      <h3>Vencimentos de hoje</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Empréstimo</th>
-            <th>Valor parcela</th>
-          </tr>
-        </thead>
-        <tbody id="dash-vencimentos-hoje">
-          <tr><td colspan="3">Nenhum vencimento hoje.</td></tr>
-        </tbody>
-      </table>
+  <!-- CARD: Vencimentos de Hoje -->
+  <div class="list-card success">
+    <div class="list-card-header">
+      <div class="icon"><i data-lucide="calendar-clock"></i></div>
+      <h3>Vencimentos de Hoje</h3>
     </div>
 
-    <!-- Empréstimos atrasados -->
-    <div>
-      <h3>Empréstimos atrasados</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Saldo</th>
-            <th>Início</th>
-          </tr>
-        </thead>
-        <tbody id="dash-atrasados">
-          <tr><td colspan="3">Nenhum empréstimo atrasado.</td></tr>
-        </tbody>
-      </table>
+    <div id="vencimentos-list" class="list-card-body">
+      <p class="empty">Nenhum vencimento hoje.</p>
     </div>
-
   </div>
+
+  <!-- CARD: Empréstimos Atrasados -->
+  <div class="list-card danger">
+    <div class="list-card-header">
+      <div class="icon"><i data-lucide="alert-triangle"></i></div>
+      <h3>Empréstimos Atrasados</h3>
+    </div>
+
+    <div id="atrasados-list" class="list-card-body">
+      <p class="empty">Nenhum empréstimo atrasado.</p>
+    </div>
+  </div>
+
+</div>
+
+
 </section>
 
 
       <!-- CLIENTES -->
-      <section id="section-clientes" class="section">
+<section id="section-clientes" class="section">
   
 
   <div class="toolbar">
@@ -492,6 +483,8 @@
   <script>
   lucide.createIcons();
 </script>
+
+
 <script>
   lucide.createIcons();
 

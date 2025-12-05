@@ -5,57 +5,200 @@
   <title>Login - Controle de Empréstimos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== FUNDO ===== */
+.login-wrapper {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  padding: 20px;
+}
+
+/* ===== CARD ===== */
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 32px;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  animation: fadeIn 0.5s ease;
+}
+
+/* ===== CABEÇALHO DO CARD ===== */
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header i {
+  width: 45px;
+  height: 45px;
+  color: #16a34a;
+}
+
+.login-header h1 {
+  font-size: 22px;
+  margin: 10px 0 4px;
+  color: #1f2937;
+}
+
+.login-header p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ===== FORMULÁRIOS ===== */
+.login-form {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form.active {
+  display: flex;
+}
+
+.login-form h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+/* ===== INPUTS ===== */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #374151;
+}
+
+.input-group input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.input-group input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px #bbf7d0;
+}
+
+/* ===== BOTÕES ===== */
+.btn.full {
+  width: 100%;
+}
+
+.form-link {
+  text-align: center;
+  font-size: 14px;
+  color: #16a34a;
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+.form-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== ANIMAÇÃO ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+  </style>
 </head>
+
+
 <body id="login-page">
-  <div class="auth-container">
-    <div class="auth-card">
-      <h1>Controle de Empréstimos Diários</h1>
-      <p class="auth-subtitle">Acesse sua conta</p>
+
+  <div class="login-wrapper">
+
+    <div class="login-card">
+
+      <div class="login-header">
+        <i data-lucide="badge-dollar-sign"></i>
+        <h1>Controle de Empréstimos</h1>
+        <p>Gerencie, acompanhe e registre seus empréstimos diários.</p>
+      </div>
 
       <!-- Formulário de Login -->
-      <form id="login-form" class="auth-form">
+      <form id="login-form" class="login-form active">
         <h2>Entrar</h2>
-        <label for="login-email">E-mail</label>
-        <input type="email" id="login-email" required placeholder="seuemail@exemplo.com" />
 
-        <label for="login-password">Senha</label>
-        <input type="password" id="login-password" required placeholder="********" />
+        <div class="input-group">
+          <label>E-mail</label>
+          <input type="email" id="login-email" required placeholder="usuario@email.com">
+        </div>
 
-        <button type="submit" class="btn primary">Entrar</button>
+        <div class="input-group">
+          <label>Senha</label>
+          <input type="password" id="login-password" required placeholder="********">
+        </div>
+
+        <button type="submit" class="btn primary full">Entrar</button>
+
+        <p class="form-link" onclick="showForm('register-form')">Criar conta</p>
+        <p class="form-link" onclick="showForm('reset-form')">Esqueci minha senha</p>
       </form>
 
       <!-- Formulário de Registro -->
-      <form id="register-form" class="auth-form">
+      <form id="register-form" class="login-form">
         <h2>Criar conta</h2>
-        <label for="register-email">E-mail</label>
-        <input type="email" id="register-email" required />
 
-        <label for="register-password">Senha</label>
-        <input type="password" id="register-password" required minlength="6" />
+        <div class="input-group">
+          <label>E-mail</label>
+          <input type="email" id="register-email" required>
+        </div>
 
-        <button type="submit" class="btn secondary">Criar conta</button>
+        <div class="input-group">
+          <label>Senha (mínimo 6 caracteres)</label>
+          <input type="password" id="register-password" minlength="6" required>
+        </div>
+
+        <button type="submit" class="btn secondary full">Criar conta</button>
+
+        <p class="form-link" onclick="showForm('login-form')">Já tenho conta</p>
       </form>
 
-      <!-- Formulário de Reset de Senha -->
-      <form id="reset-form" class="auth-form">
-        <h2>Esqueci minha senha</h2>
-        <label for="reset-email">Informe seu e-mail</label>
-        <input type="email" id="reset-email" required />
+      <!-- Formulário de Reset -->
+      <form id="reset-form" class="login-form">
+        <h2>Redefinir senha</h2>
 
-        <button type="submit" class="btn outline">Enviar link de redefinição</button>
+        <div class="input-group">
+          <label>E-mail</label>
+          <input type="email" id="reset-email" required>
+        </div>
+
+        <button type="submit" class="btn outline full">Enviar link</button>
+
+        <p class="form-link" onclick="showForm('login-form')">Voltar ao login</p>
       </form>
 
       <div id="auth-messages" class="alert" style="display:none;"></div>
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    function showForm(id) {
+      document.querySelectorAll(".login-form").forEach(f => f.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+  </script>
 
-  <!-- Configuração do Firebase e lógica -->
-  <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
 </body>
+
+
+
 </html>

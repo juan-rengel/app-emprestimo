@@ -819,38 +819,38 @@ async function refreshDashboard() {
     `${countAtivo} / ${countAtrasado} / ${countQuitado}`;
 
   // Tabela "Vencimentos de hoje"
-  const vencTbody = document.getElementById("dash-vencimentos-hoje");
-  vencTbody.innerHTML = "";
+ // ----- VENCIMENTOS HOJE -----
+const vencList = document.getElementById("vencimentos-list");
+vencList.innerHTML = "";
 
-  if (vencimentosHoje.length === 0) {
-    vencTbody.innerHTML = '<tr><td colspan="3">Nenhum vencimento hoje.</td></tr>';
-  } else {
-    vencimentosHoje.forEach(v => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${v.cliente}</td>
-        <td>${v.descricao}</td>
-        <td>${formatCurrency(v.valor)}</td>
-      `;
-      vencTbody.appendChild(tr);
-    });
-  }
+if (vencimentosHoje.length === 0) {
+  vencList.innerHTML = `<p class="empty">Nenhum vencimento hoje.</p>`;
+} else {
+  vencimentosHoje.forEach(v => {
+    vencList.innerHTML += `
+      <div class="list-item">
+        <strong>${v.cliente}</strong>
+        <p>Parcela: ${formatCurrency(v.valor)}</p>
+      </div>
+    `;
+  });
+}
 
-  // Tabela "Atrasados"
-  const atrTbody = document.getElementById("dash-atrasados");
-  atrTbody.innerHTML = "";
+// ----- ATRASADOS -----
+const atrList = document.getElementById("atrasados-list");
+atrList.innerHTML = "";
 
-  if (atrasados.length === 0) {
-    atrTbody.innerHTML = '<tr><td colspan="3">Nenhum empréstimo atrasado.</td></tr>';
-  } else {
-    atrasados.forEach(a => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${a.cliente}</td>
-        <td>${formatCurrency(a.saldo)}</td>
-        <td>${a.inicio}</td>
-      `;
-      atrTbody.appendChild(tr);
-    });
-  }
+if (atrasados.length === 0) {
+  atrList.innerHTML = `<p class="empty">Nenhum empréstimo atrasado.</p>`;
+} else {
+  atrasados.forEach(a => {
+    atrList.innerHTML += `
+      <div class="list-item">
+        <strong>${a.cliente}</strong>
+        <p>Saldo devedor: ${formatCurrency(a.saldo)}</p>
+      </div>
+    `;
+  });
+}
+
 }
