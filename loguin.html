@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - Controle de Empréstimos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body id="login-page">
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1>Controle de Empréstimos Diários</h1>
+      <p class="auth-subtitle">Acesse sua conta</p>
+
+      <!-- Formulário de Login -->
+      <form id="login-form" class="auth-form">
+        <h2>Entrar</h2>
+        <label for="login-email">E-mail</label>
+        <input type="email" id="login-email" required placeholder="seuemail@exemplo.com" />
+
+        <label for="login-password">Senha</label>
+        <input type="password" id="login-password" required placeholder="********" />
+
+        <button type="submit" class="btn primary">Entrar</button>
+      </form>
+
+      <!-- Formulário de Registro -->
+      <form id="register-form" class="auth-form">
+        <h2>Criar conta</h2>
+        <label for="register-email">E-mail</label>
+        <input type="email" id="register-email" required />
+
+        <label for="register-password">Senha</label>
+        <input type="password" id="register-password" required minlength="6" />
+
+        <button type="submit" class="btn secondary">Criar conta</button>
+      </form>
+
+      <!-- Formulário de Reset de Senha -->
+      <form id="reset-form" class="auth-form">
+        <h2>Esqueci minha senha</h2>
+        <label for="reset-email">Informe seu e-mail</label>
+        <input type="email" id="reset-email" required />
+
+        <button type="submit" class="btn outline">Enviar link de redefinição</button>
+      </form>
+
+      <div id="auth-messages" class="alert" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Configuração do Firebase e lógica -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
